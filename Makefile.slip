@@ -4,7 +4,7 @@
 APPLICATION = data-collector
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= native
+BOARD ?= samr21-xpro
 
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../../riot/repo
@@ -39,6 +39,21 @@ endif
 CFLAGS += -DDATAHEAD_ADDR=$(DATAHEAD_ADDR)
 CFLAGS += -DDATAHEAD_PORT=$(DATAHEAD_PORT)
 
+# Border router requirements
+ifeq (,$(SLIP_UART))
+  # set default (last available UART)
+  SLIP_UART="(UART_NUMOF-1)"
+endif
+ifeq (,$(SLIP_BAUDRATE))
+  # set default
+  SLIP_BAUDRATE=115200
+endif
+
+GNRC_NETIF_NUMOF := 2
+INCLUDES += -I$(CURDIR)
+CFLAGS += -DSLIP_UART=$(SLIP_UART)
+CFLAGS += -DSLIP_BAUDRATE=$(SLIP_BAUDRATE)
+
 BOARD_PROVIDES_NETIF := airfy-beacon cc2538dk fox iotlab-m3 iotlab-a8-m3 mulle \
         microbit native nrf51dongle nrf52dk nrf6310 openmote-cc2538 pba-d-01-kw2x \
         pca10000 pca10005 remote-pa remote-reva saml21-xpro samr21-xpro \
@@ -67,6 +82,15 @@ ifneq (,$(filter $(BOARD),$(BOARD_PROVIDES_NETIF)))
   # Required by nanocoap, but only due to issue #5959.
   USEMODULE += posix
   USEMODULE += gcoap
+
+  # Add a routing protocol
+  USEMODULE += gnrc_rpl
+
+  # Border router requirements
+  # Include SLIP package for IP over Serial communication
+  USEMODULE += gnrc_slip
+  # Specify the mandatory networking modules for 6LoWPAN border router
+  USEMODULE += gnrc_sixlowpan_border_router_default
 endif
 
 ifneq (,$(filter msb-430,$(BOARD)))
@@ -80,11 +104,9 @@ endif
 
 # Include and auto-initialize all available sensors
 USEMODULE += saul_default
-ifeq (,$(filter native,$(BOARD)))
-  # For Microchip MCP9808 temperature sensor. No further configuration needed;
-  # uses defaults.
-  USEMODULE += jc42
-endif
+# For Microchip MCP9808 temperature sensor. No further configuration needed;
+# uses defaults.
+USEMODULE += jc42
 
 include $(RIOTBASE)/Makefile.include
 

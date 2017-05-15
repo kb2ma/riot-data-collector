@@ -73,6 +73,7 @@ Build with the standard `Makefile`. Follow the setup [instructions][4] for the g
     # Must define this address.
     $ sudo ip address add fe80::bbbb:1/64 dev tap0
 
+
 # Datahead Server
 The RIOT data collector expects to communicate with a CoAP listener interested in the data. The interface between them includes these resources: <br>
 
@@ -82,6 +83,17 @@ The RIOT data collector expects to communicate with a CoAP listener interested i
 | /dh/tmp  | Host | Listener observes this resource on RIOT host (GET) |
 
 I use [Datahead][5] to provide the server side of the interface.
+
+
+# Hardware
+We connect the Adafruit MCP9808 [breakout board](https://www.adafruit.com/products/1782) to a SAMR21 Xplained Pro board via I2C. The pins are:
+
+| Function | SAMR21 | MCP9808 |
+| -------- | ------ | ------- |
+| I2C SCL  | PA17   | SCL     |
+| I2C SDA  | PA16   | SDA     |
+| 3.3V     | VCC    | Vdd     |
+| Ground   | GND    | Gnd     |
 
 
 [1]: https://github.com/RIOT-OS/RIOT/tree/master/examples/gnrc_border_router  "documentation"

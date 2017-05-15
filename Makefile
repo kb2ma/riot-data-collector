@@ -31,13 +31,24 @@ QUIET ?= 1
 
 # Bootstrapping information for Datahead
 ifeq (,$(DATAHEAD_ADDR))
-  DATAHEAD_ADDR='"bbbb::1"'
+  ifneq (,$(filter native,$(BOARD)))
+    DATAHEAD_ADDR='"fe80::bbbb:1"'
+  else
+    DATAHEAD_ADDR='"bbbb::1"'
+  endif
 endif
 ifeq (,$(DATAHEAD_PORT))
   DATAHEAD_PORT='"5683"'
 endif
+ifeq (,$(HOST_ADDR))
+  HOST_ADDR='"aaaa::2/64"'
+  ROUTER_IF=7
+endif
+
 CFLAGS += -DDATAHEAD_ADDR=$(DATAHEAD_ADDR)
 CFLAGS += -DDATAHEAD_PORT=$(DATAHEAD_PORT)
+CFLAGS += -DHOST_ADDR=$(HOST_ADDR)
+CFLAGS += -DROUTER_IF=$(ROUTER_IF)
 
 BOARD_PROVIDES_NETIF := airfy-beacon cc2538dk fox iotlab-m3 iotlab-a8-m3 mulle \
         microbit native nrf51dongle nrf52dk nrf6310 openmote-cc2538 pba-d-01-kw2x \
@@ -67,6 +78,12 @@ ifneq (,$(filter $(BOARD),$(BOARD_PROVIDES_NETIF)))
   # Required by nanocoap, but only due to issue #5959.
   USEMODULE += posix
   USEMODULE += gcoap
+
+  ifneq (,$(NET_ROUTER))
+    # Add a routing protocol
+    USEMODULE += gnrc_rpl
+    CFLAGS += -DNET_ROUTER
+  endif
 endif
 
 ifneq (,$(filter msb-430,$(BOARD)))

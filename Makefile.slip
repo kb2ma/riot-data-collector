@@ -31,13 +31,22 @@ QUIET ?= 1
 
 # Bootstrapping information for Datahead
 ifeq (,$(DATAHEAD_ADDR))
+  # don't include prefix length in address
   DATAHEAD_ADDR='"bbbb::1"'
 endif
 ifeq (,$(DATAHEAD_PORT))
   DATAHEAD_PORT='"5683"'
 endif
+# For local wireless interface; only used if a router (NET_ROUTER defined).
+ifeq (,$(HOST_ADDR))
+  HOST_ADDR='"aaaa::1/64"'
+  ROUTER_IF=7
+endif
+
 CFLAGS += -DDATAHEAD_ADDR=$(DATAHEAD_ADDR)
 CFLAGS += -DDATAHEAD_PORT=$(DATAHEAD_PORT)
+CFLAGS += -DHOST_ADDR=$(HOST_ADDR)
+CFLAGS += -DROUTER_IF=$(ROUTER_IF)
 
 # Border router requirements
 ifeq (,$(SLIP_UART))
@@ -49,10 +58,24 @@ ifeq (,$(SLIP_BAUDRATE))
   SLIP_BAUDRATE=115200
 endif
 
+ifeq (,$(SLIP_ADDR))
+  # must include prefix length in address
+  SLIP_ADDR='"bbbb::2/64"'
+  BORDER_IF=8
+endif
+ifeq (,$(SLIP_PEER_ADDR))
+  # don't include prefix length in address
+  SLIP_PEER_ADDR='"bbbb::1"'
+endif
+
 GNRC_NETIF_NUMOF := 2
 INCLUDES += -I$(CURDIR)
+CFLAGS += -DNET_SLIP
 CFLAGS += -DSLIP_UART=$(SLIP_UART)
 CFLAGS += -DSLIP_BAUDRATE=$(SLIP_BAUDRATE)
+CFLAGS += -DSLIP_ADDR=$(SLIP_ADDR)
+CFLAGS += -DSLIP_PEER_ADDR=$(SLIP_PEER_ADDR)
+CFLAGS += -DBORDER_IF=$(BORDER_IF)
 
 BOARD_PROVIDES_NETIF := airfy-beacon cc2538dk fox iotlab-m3 iotlab-a8-m3 mulle \
         microbit native nrf51dongle nrf52dk nrf6310 openmote-cc2538 pba-d-01-kw2x \
@@ -83,14 +106,17 @@ ifneq (,$(filter $(BOARD),$(BOARD_PROVIDES_NETIF)))
   USEMODULE += posix
   USEMODULE += gcoap
 
-  # Add a routing protocol
-  USEMODULE += gnrc_rpl
-
   # Border router requirements
   # Include SLIP package for IP over Serial communication
   USEMODULE += gnrc_slip
-  # Specify the mandatory networking modules for 6LoWPAN border router
-  USEMODULE += gnrc_sixlowpan_border_router_default
+
+  ifneq (,$(NET_ROUTER))
+    # Add a routing protocol
+    USEMODULE += gnrc_rpl
+    # Specify the mandatory networking modules for 6LoWPAN border router
+    USEMODULE += gnrc_sixlowpan_border_router_default
+    CFLAGS += -DNET_ROUTER
+  endif
 endif
 
 ifneq (,$(filter msb-430,$(BOARD)))

@@ -2,10 +2,10 @@
 
 RIOT example app to collect temperature readings and report them via CoAP. Uses a JC-42.4 compliant temperature sensor via RIOT's SAUL sensor/actuator API. Uses the CoAP Observe exension to report the data with RIOT's gcoap implementation.
 
-Below are two sections to help set up the data collector, for networking and for the server that listens for the temperature readings.
+The sections below help to set up the data collector, including networking, the server that listens for the temperature readings, and sensor hardware to collect the readings.
 
 # Networking Setup
-Below are subsections for the supported networking types. Also, check the make file for required addresses.<br>
+Below are subsections for the supported networking types. The uppercase names below are variables in the make files.<br>
 
 | Name | Description |
 | ---- | ----------- |

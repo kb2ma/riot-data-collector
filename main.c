@@ -52,8 +52,11 @@ static gcoap_listener_t _listener = {
 
 
 /* Handles 'hello' response from Datahead server. */
-static void _hello_handler(unsigned req_state, coap_pkt_t* pdu)
+static void _hello_handler(unsigned req_state, coap_pkt_t* pdu,
+                           sock_udp_ep_t *remote)
 {
+    (void)remote;
+
     if (req_state == GCOAP_MEMO_TIMEOUT) {
         printf("Timeout on 'hello' response; msg ID %02u\n", coap_get_id(pdu));
     }
@@ -219,8 +222,10 @@ static int _send_hello(void)
     sock_udp_ep_t server_sock;
     ipv6_addr_t addr;
 
-    len = gcoap_request(&pdu, &buf[0], GCOAP_PDU_BUF_SIZE, COAP_METHOD_POST,
-                        DATAHEAD_HELLO_PATH);
+    gcoap_req_init(&pdu, &buf[0], GCOAP_PDU_BUF_SIZE, COAP_METHOD_POST,
+                    DATAHEAD_HELLO_PATH);
+    coap_hdr_set_type(pdu.hdr, COAP_TYPE_CON);
+    len = gcoap_finish(&pdu, 0, COAP_FORMAT_NONE);
 
     server_sock.family = AF_INET6;
     server_sock.netif  = SOCK_ADDR_ANY_NETIF;
